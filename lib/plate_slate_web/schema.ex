@@ -3,6 +3,8 @@ defmodule PlateSlateWeb.Schema do
   alias PlateSlateWeb.Resolvers
 
   import_types __MODULE__.MenuTypes
+  import_types __MODULE__.OrderingTypes
+  import_types Absinthe.Type.Custom
 
   query do
     field :menu_items, list_of(:menu_item) do
@@ -14,12 +16,10 @@ defmodule PlateSlateWeb.Schema do
 
   mutation do
     field :place_order, :order do
-
+      arg :items, non_null(list_of(:place_order_input))
+      arg :customer_number, non_null(:integer)
+      resolve &Resolvers.Ordering.place_order/3
     end
-  end
-
-  object :order do
-
   end
 
   enum :sort_order do
@@ -27,15 +27,15 @@ defmodule PlateSlateWeb.Schema do
     value :desc
   end
 
-  scalar :decimal do
-    # parse fn(input) -> ... end # input is struct (a part of absinthe ast) - blueprint tree
-    # serialize fn(value) -> ... end # value is what is was parsed (literal or variable value returned)
-
-    parse fn input ->
-      input.value |> Decimal.parse
-    end
-    serialize fn value ->
-      to_string(value)
-    end
-  end
+  # scalar :decimal do
+  #   # parse fn(input) -> ... end # input is struct (a part of absinthe ast) - blueprint tree
+  #   # serialize fn(value) -> ... end # value is what is was parsed (literal or variable value returned)
+  #
+  #   parse fn input ->
+  #     input.value |> Decimal.parse
+  #   end
+  #   serialize fn value ->
+  #     to_string(value)
+  #   end
+  # end
 end

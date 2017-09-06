@@ -11,3 +11,34 @@
 `get` for queries
 
 `post` for mutations
+
+
+```
+mutation($items:[PlaceOrderInput!]!) { } # non null list of non null
+```
+
+```
+mutation($items:[PlaceOrderInput!]!) { # non null list of non null
+  placeOrder(items:$items, customerNumber: 4) {
+    orderedAt
+    items {
+      price
+      menuItem {
+        name
+        category { name }
+      }
+    }
+  }
+}
+
+--
+
+{
+  "items": [{
+  	"menuItemId": 4, "quantity": 1
+  }, {
+    "menuItemId": 14, "quantity": 2
+  }]
+}
+
+```
