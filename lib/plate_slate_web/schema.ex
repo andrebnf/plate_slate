@@ -1,14 +1,25 @@
 defmodule PlateSlateWeb.Schema do
   use Absinthe.Schema
 
-  import Ecto.Query
-  alias PlateSlate.{Menu, Repo}
+  alias PlateSlateWeb.Resolvers
 
   query do
     field :menu_items, list_of(:menu_item) do
-      arg :matching, :string
-      resolve fn _, args, _ -> menu_item_resolver(nil, args, nil) end
+      arg :filter, :menu_items_filter
+      arg :order, :sort_order, default_value: :asc
+      resolve &Resolvers.Menu.menu_items/3
     end
+  end
+
+  enum :sort_order do
+    value :asc
+    value :desc
+  end
+
+  input_object :menu_items_filter do
+    field :matching, :string
+    field :priced_above, :decimal
+    field :priced_below, :decimal
   end
 
   @desc """
@@ -19,17 +30,18 @@ defmodule PlateSlateWeb.Schema do
     @desc "Name description"
     field :name, :string
     field :description, :string
-    field :price, :float
+    field :price, :decimal
   end
 
+  scalar :decimal do
+    # parse fn(input) -> ... end # input is struct (a part of absinthe ast) - blueprint tree
+    # serialize fn(value) -> ... end # value is what is was parsed (literal or variable value returned)
 
-  defp menu_item_resolver(_, %{matching: term}, _) do
-    query =
-      Menu.Item
-      |> where([item], ilike(item.name, ^"%#{term}%"))
-
-    {:ok, Repo.all(query)}
+    parse fn input ->
+      input.value |> Decimal.parse
+    end
+    serialize fn value ->
+      to_string(value)
+    end
   end
-  defp menu_item_resolver(_, _, _), do: {:ok, Repo.all(Menu.Item)}
-
 end

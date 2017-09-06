@@ -6,7 +6,34 @@ defmodule PlateSlate.Menu do
   import Ecto.Query, warn: false
   alias PlateSlate.Repo
 
+  alias PlateSlate.Menu.Item
   alias PlateSlate.Menu.Category
+
+  def list_menu_items(args) do
+    args
+    |> Enum.reduce(Item, fn
+      {:order, order}, query ->
+        query |> order_by({^order, :name})
+      {:filter, filter}, query ->
+        query |> filter_with(filter)
+      _, query ->
+        query
+    end)
+    |> Repo.all
+  end
+
+  defp filter_with(query, filter) do
+    Enum.reduce(filter, query, fn
+      {:matching, name}, query ->
+        from q in query, where: ilike(q.name, ^"%#{name}%")
+      {:priced_above, price}, query ->
+        from q in query, where: q.price >= ^price
+      {:priced_below, price}, query ->
+        from q in query, where: q.price <= ^price
+      _, query ->
+        query
+    end)
+  end
 
   @doc """
   Returns the list of categories.
